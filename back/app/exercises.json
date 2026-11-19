@@ -1,0 +1,291 @@
+[
+  {
+    "id": "1",
+    "category": "Modificar",
+    "title": "Reemplaza el tercer valor",
+    "instruction": "El tercer valor está guardado en el índice 2. Elige la instrucción que reemplaza ese valor por 15.",
+    "code": "valores = [3, 7, 9, 4]",
+    "options": [
+      "valores[2] = 15",
+      "valores[3] = 15",
+      "valores[1] = 15"
+    ],
+    "correct": 0,
+    "explanation": "El índice 2 identifica la tercera posición. El índice permanece igual; el valor almacenado cambia de 9 a 15.",
+    "hint": "En Python, la primera posición usa el índice 0; la tercera usa el índice 2.",
+    "values": [
+      3,
+      7,
+      9,
+      4
+    ],
+    "result": [
+      3,
+      7,
+      15,
+      4
+    ],
+    "selected": 2,
+    "modified": true,
+    "related": "Modificar"
+  },
+  {
+    "id": "2",
+    "category": "Modificar",
+    "title": "Identifica dónde se reemplaza el valor",
+    "instruction": "La instrucción no cambia el número del índice. Indica en qué índice se reemplazará el valor almacenado.",
+    "code": "valores = [5, 2, 8, 1]\nvalores[0] = 9",
+    "options": [
+      "Índice 0: 5 se reemplaza por 9",
+      "Índice 1: 2 se reemplaza por 9",
+      "Índice 9: se guarda el valor 0"
+    ],
+    "correct": 0,
+    "explanation": "valores[0] señala la primera posición. El índice sigue siendo 0 y su valor cambia de 5 a 9.",
+    "hint": "El número entre corchetes indica la posición donde se almacena el nuevo valor.",
+    "values": [
+      5,
+      2,
+      8,
+      1
+    ],
+    "result": [
+      9,
+      2,
+      8,
+      1
+    ],
+    "selected": 0,
+    "modified": true,
+    "related": "Modificar"
+  },
+  {
+    "id": "3",
+    "category": "Consultar",
+    "title": "Lee un valor por su índice",
+    "instruction": "Observa el índice entre corchetes y elige el valor que se guardará en la variable x. El arreglo no se modifica.",
+    "code": "valores = [8, 4, 12, 6]\nx = valores[2]",
+    "options": [
+      "x = 4",
+      "x = 12",
+      "x = 2"
+    ],
+    "correct": 1,
+    "explanation": "El índice 2 corresponde a la tercera posición, donde está almacenado el valor 12. Por eso x recibe 12.",
+    "hint": "Cuenta las posiciones desde el índice 0: 0→8, 1→4, 2→12.",
+    "values": [
+      8,
+      4,
+      12,
+      6
+    ],
+    "result": [
+      8,
+      4,
+      12,
+      6
+    ],
+    "selected": 2,
+    "related": "Consultar"
+  },
+  {
+    "id": "4",
+    "category": "Modificar",
+    "title": "Reconoce el arreglo resultante",
+    "instruction": "Elige cómo queda el arreglo después de reemplazar el valor almacenado en el índice 1 por 10.",
+    "code": "valores = [8, 4, 12, 6]\nvalores[1] = 10",
+    "options": [
+      "[8, 10, 12, 6]",
+      "[10, 4, 12, 6]",
+      "[8, 4, 10, 6]"
+    ],
+    "correct": 0,
+    "explanation": "El índice 1 es la segunda posición. Solo su valor cambia de 4 a 10.",
+    "hint": "Ubica primero la posición con índice 1; no cuentes desde 1.",
+    "values": [
+      8,
+      4,
+      12,
+      6
+    ],
+    "result": [
+      8,
+      10,
+      12,
+      6
+    ],
+    "selected": 1,
+    "modified": true,
+    "related": "Modificar"
+  },
+  {
+    "id": "5",
+    "category": "Longitud",
+    "title": "Cuenta los elementos",
+    "instruction": "Elige el número que imprimirá len. len cuenta cuántos valores contiene el arreglo; no suma sus valores.",
+    "code": "valores = [6, 3, 9, 2]\nprint(len(valores))",
+    "options": [
+      "4",
+      "20",
+      "3"
+    ],
+    "correct": 0,
+    "explanation": "El arreglo contiene cuatro valores, así que len(valores) produce 4.",
+    "hint": "Cuenta las posiciones visibles del arreglo.",
+    "values": [
+      6,
+      3,
+      9,
+      2
+    ],
+    "result": [
+      6,
+      3,
+      9,
+      2
+    ],
+    "related": "Consultar"
+  },
+  {
+    "id": "6",
+    "category": "Suma",
+    "title": "Calcula la salida de sum",
+    "instruction": "Elige el resultado que se mostrará en consola al sumar todos los valores del arreglo.",
+    "code": "valores = [2, 5, 3, 4]\nprint(sum(valores))",
+    "options": [
+      "10",
+      "14",
+      "4"
+    ],
+    "correct": 1,
+    "explanation": "sum(valores) calcula 2 + 5 + 3 + 4, cuyo resultado es 14.",
+    "hint": "Suma los cuatro valores; los índices no participan en la suma.",
+    "values": [
+      2,
+      5,
+      3,
+      4
+    ],
+    "result": [
+      2,
+      5,
+      3,
+      4
+    ],
+    "related": "Consultar"
+  },
+  {
+    "id": "7",
+    "category": "Salida",
+    "title": "Predice qué valor se imprime",
+    "instruction": "Elige el valor almacenado en el índice consultado. print mostrará ese valor, no el número del índice.",
+    "code": "valores = [11, 7, 5, 2]\nprint(valores[1])",
+    "options": [
+      "11",
+      "7",
+      "1"
+    ],
+    "correct": 1,
+    "explanation": "El índice 1 señala la segunda posición, que almacena el valor 7. La consola imprime 7.",
+    "hint": "Distingue el índice 1 del valor 7 almacenado en esa posición.",
+    "values": [
+      11,
+      7,
+      5,
+      2
+    ],
+    "result": [
+      11,
+      7,
+      5,
+      2
+    ],
+    "selected": 1,
+    "related": "Consultar"
+  },
+  {
+    "id": "8",
+    "category": "Recorrer",
+    "title": "Sigue el orden del recorrido",
+    "instruction": "El for visita cada valor de izquierda a derecha. Elige el orden exacto en que aparecerán en consola.",
+    "code": "valores = [4, 1, 6, 2]\nfor valor in valores:\n    print(valor)",
+    "options": [
+      "4, 1, 6, 2",
+      "0, 1, 2, 3",
+      "2, 6, 1, 4"
+    ],
+    "correct": 0,
+    "explanation": "El recorrido imprime los valores en el mismo orden en que están guardados: 4, 1, 6 y 2.",
+    "hint": "El for usa cada valor del arreglo, no sus índices.",
+    "values": [
+      4,
+      1,
+      6,
+      2
+    ],
+    "result": [
+      4,
+      1,
+      6,
+      2
+    ],
+    "related": "Recorrer"
+  },
+  {
+    "id": "9",
+    "category": "Error",
+    "title": "Detecta un índice fuera de rango",
+    "instruction": "El arreglo tiene cuatro posiciones, con índices del 0 al 3. Elige qué ocurrirá al consultar el índice 4.",
+    "code": "valores = [8, 4, 12, 6]\nprint(valores[4])",
+    "options": [
+      "Se imprime 6",
+      "Se produce un error de índice",
+      "Se imprime 4"
+    ],
+    "correct": 1,
+    "explanation": "El índice 4 no existe en este arreglo. Las cuatro posiciones válidas usan los índices 0, 1, 2 y 3.",
+    "hint": "Cuatro elementos no implican que exista el índice 4, porque la numeración comienza en 0.",
+    "values": [
+      8,
+      4,
+      12,
+      6
+    ],
+    "result": [
+      8,
+      4,
+      12,
+      6
+    ],
+    "related": "Caso con error"
+  },
+  {
+    "id": "10",
+    "category": "Integrar",
+    "title": "Aplica dos modificaciones",
+    "instruction": "Ejecuta mentalmente ambas instrucciones y elige el arreglo final. Cada instrucción reemplaza un valor, no el índice.",
+    "code": "valores = [3, 6, 9, 12]\nvalores[0] = 5\nvalores[3] = 10",
+    "options": [
+      "[5, 6, 9, 10]",
+      "[3, 5, 10, 12]",
+      "[0, 6, 9, 3]"
+    ],
+    "correct": 0,
+    "explanation": "En el índice 0, 3 cambia por 5; en el índice 3, 12 cambia por 10. Los índices siguen siendo 0, 1, 2 y 3.",
+    "hint": "Aplica una instrucción a la vez: primero modifica la primera posición y después la cuarta.",
+    "values": [
+      3,
+      6,
+      9,
+      12
+    ],
+    "result": [
+      5,
+      6,
+      9,
+      10
+    ],
+    "modified": true,
+    "related": "Modificar"
+  }
+]

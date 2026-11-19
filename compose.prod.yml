@@ -1,0 +1,22 @@
+services:
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile.prod
+    environment:
+      PORT: "8000"
+      STUDY_MODE: ${STUDY_MODE:-false}
+    expose: ["8000"]
+    restart: unless-stopped
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        BUILD_MODE: ${BUILD_MODE:-production}
+    ports: ["8080:8080"]
+    environment:
+      PORT: "8080"
+      API_UPSTREAM: http://back:8000
+    depends_on: [back]
+    restart: unless-stopped

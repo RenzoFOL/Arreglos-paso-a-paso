@@ -1,0 +1,20 @@
+services:
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile.local
+    ports: ["8000:8000"]
+    environment:
+      STUDY_MODE: "true"
+      CORS_ORIGINS: http://localhost:5173
+    volumes: ["./back/app:/app/app"]
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    ports: ["5173:5173"]
+    environment:
+      API_PROXY_TARGET: http://back:8000
+      VITE_STUDY_MODE: "true"
+    volumes: ["./frontend/src:/app/src"]
+    depends_on: [back]
