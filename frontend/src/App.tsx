@@ -13,6 +13,53 @@ const modules: Module[] = [
   "Práctica",
 ]
 const initial = [8, 4, 12, 6]
+function HeroArray({ active }: { active: boolean }) {
+  const [selected, setSelected] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const [reduced, setReduced] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
+  useEffect(() => {
+    const media = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    const update = () => setReduced(media?.matches ?? false)
+    media?.addEventListener('change', update)
+    return () => media?.removeEventListener('change', update)
+  }, [])
+  useEffect(() => {
+    if (!active || paused || reduced) return
+    const timer = setInterval(() => {
+      if (!document.hidden) setSelected(i => (i + 1) % initial.length)
+    }, 1600)
+    return () => clearInterval(timer)
+  }, [active, paused, reduced])
+  return <section className="hero-array" aria-label="Recorrido de un arreglo de cuatro posiciones">
+    <div className="hero-array-top"><span className="code-file"><Icon name="code" size={16} />Un arreglo, cuatro posiciones</span><span className="badge">Python</span></div>
+    <div className="hero-code">valores = <span>[8, 4, 12, 6]</span></div>
+    <ArrayView values={initial} selected={selected} onSelect={i => { setSelected(i); setPaused(true) }} />
+    <div className="hero-array-caption">
+      <p><span className="tiny-dot" />Índice {selected} → valor {initial[selected]}</p>
+      {!reduced && <button className="text-link" aria-pressed={paused} onClick={() => setPaused(p => !p)}>{paused ? 'Reanudar recorrido' : 'Pausar recorrido'}</button>}
+    </div>
+    <div className="hero-progress" aria-hidden="true">{initial.map((_, i) => <span key={i} className={i === selected ? 'current' : ''} />)}</div>
+  </section>
+}
+function SuggestedRoute({ current, go }: { current: Module; go: (m: Module) => void }) {
+  const position = modules.indexOf(current)
+  const next = modules[position + 1] ?? 'Inicio'
+  const description: Record<Module, string> = {
+    Inicio: 'Esta ruta es una sugerencia. Tú eliges cómo explorar.',
+    Teoría: 'Relaciona los conceptos con una ejecución paso a paso.',
+    Ejemplos: 'Prueba tus propias instrucciones en el laboratorio.',
+    Laboratorio: 'Pon a prueba lo que observaste con un reto.',
+    Práctica: 'Puedes volver a cualquier módulo cuando lo necesites.',
+  }
+  return <section className="suggested-route" aria-label="Ruta sugerida">
+    <div className="route-intro"><Icon name="info" /><div><h3>{current === 'Inicio' ? '¿No sabes por dónde empezar?' : `Estás en ${current}`}</h3><p>{description[current]}</p></div></div>
+    <div className="route-steps">{modules.slice(1).map((m, i) => <span key={m}>
+      <button onClick={() => go(m)} data-study-id={`route-${m}`} aria-current={current === m ? 'step' : undefined}><span>{i + 1}</span>{m}</button>
+      {i < 3 && <Icon size={16} />}
+    </span>)}</div>
+    <button className="text-link" onClick={() => go(next)}>{current === 'Inicio' ? 'Comenzar por Teoría' : next === 'Inicio' ? 'Volver a Inicio' : `Continuar a ${next}`}<Icon /></button>
+  </section>
+}
 function Icon({ name = "arrow", size = 20 }: { name?: string; size?: number }) {
   const paths: Record<string, string> = {
     arrow: "M5 12h14m-5-5 5 5-5 5",
@@ -651,26 +698,7 @@ export default function App() {
                   Comenzar ruta sugerida
                 </Button>
               </div>
-              <div
-                className="hero-array"
-                aria-label="Ejemplo de arreglo: índices 0 a 3 y valores 8, 4, 12, 6"
-              >
-                <div className="hero-array-top">
-                  <span className="code-file">
-                    <Icon name="code" size={16} />
-                    Un arreglo, cuatro posiciones
-                  </span>
-                  <span className="badge">Python</span>
-                </div>
-                <div className="hero-code">
-                  valores = <span>[8, 4, 12, 6]</span>
-                </div>
-                <ArrayView values={initial} />
-                <p>
-                  <span className="tiny-dot" />
-                  Cada índice señala un valor.
-                </p>
-              </div>
+              <HeroArray active={module === "Inicio"} />
             </div>
             <div className="section-heading">
               <h2>¿Qué quieres explorar?</h2>
@@ -704,36 +732,14 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <section className="suggested-route">
-              <div className="route-intro">
-                <Icon name="info" />
-                <div>
-                  <h3>¿No sabes por dónde empezar?</h3>
-                  <p>Esta ruta es una sugerencia. Tú eliges cómo explorar.</p>
-                </div>
-              </div>
-              <div className="route-steps">
-                {modules.slice(1).map((m, i) => (
-                  <span key={m}>
-                    <button onClick={() => go(m)}>
-                      <span>{i + 1}</span>
-                      {m}
-                    </button>
-                    {i < 3 && <Icon size={16} />}
-                  </span>
-                ))}
-              </div>
-              <button className="text-link" onClick={() => go("Teoría")}>
-                Comenzar por Teoría
-                <Icon />
-              </button>
-            </section>
+
           </>
         </div>
         <div hidden={module !== "Teoría"}>{visited.includes("Teoría") && <Theory openExample={openExample} startConcept={concept} />}</div>
         <div hidden={module !== "Práctica"}>{visited.includes("Práctica") && <Practice openExample={openExample} />}</div>
         <div hidden={module !== "Laboratorio"}>{visited.includes("Laboratorio") && <Laboratory />}</div>
         <div hidden={module !== "Ejemplos"}>{visited.includes("Ejemplos") && <><button className="text-link back-link" onClick={() => go(returnTo)}>← Volver a {returnTo}</button><EditableExamples initialExample={example} /></>}</div>
+        <SuggestedRoute current={module} go={go} />
       </main>
       <footer>
         <span>

@@ -23,7 +23,13 @@ export default function CodeEditor({ source, onChange, line, disabled }: { sourc
     view.current = new EditorView({ parent: host.current!, state: EditorState.create({ doc: source, extensions: [basicSetup, python(), lineField, editable.current.of(EditorState.readOnly.of(disabled)),
       EditorView.contentAttributes.of({ 'aria-label': 'Código Python', 'data-study-id': 'python-editor' }),
       EditorView.updateListener.of(update => { if (update.docChanged) change.current(update.state.doc.toString()) }),
-      EditorView.theme({ '&': { fontSize: '14px' }, '.cm-content': { minHeight: '230px' }, '.cm-scroller': { overflow: 'auto' } }),
+      EditorView.theme({
+        '&': { fontSize: '14px' },
+        '.cm-content': { minHeight: '280px', padding: '16px 0' },
+        '.cm-scroller': { overflow: 'auto', lineHeight: '2.6' },
+        '.cm-line': { padding: '0 16px' },
+        '.cm-gutterElement': { padding: '0 8px' },
+      }),
     ] }) })
     return () => { view.current?.destroy(); view.current = null }
   }, [])

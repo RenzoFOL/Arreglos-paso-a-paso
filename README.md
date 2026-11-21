@@ -58,12 +58,16 @@ La interfaz estará en `http://localhost:5173`. Vite envía `/api` al puerto 800
 
 ## Uso del laboratorio
 
-1. Elegir un ejemplo o modificar el código en CodeMirror.
+1. En **Ejemplos**, elegir uno de los cuatro casos. En **Laboratorio**, modificar directamente el código en CodeMirror; el laboratorio ya no tiene pestañas de casos.
 2. Pulsar **Ejecutar código**. Se calcula la traza completa del código real.
 3. Consultar el estado inicial y avanzar por los estados posteriores a cada línea. Cada paso indica la línea ejecutada y la siguiente, si existe.
 4. Comparar los valores modificados, las referencias compartidas y la salida acumulada en ese momento.
 5. Usar Anterior, Siguiente, Reproducir, Pausar o el selector de paso para revisar la traza. Retroceder consulta un estado guardado; no deshace la ejecución del motor.
-6. En el laboratorio, la consola permite consultar y modificar las variables de la última ejecución. Usa el editor para bloques de varias líneas. Ejecutar el editor empieza un contexto limpio; la consola lo conserva entre instrucciones.
+6. En el laboratorio, desplegar **Consola interactiva** dentro de **Estado del arreglo** para consultar y modificar las variables de la última ejecución. Usa el editor para bloques de varias líneas. Ejecutar el editor empieza un contexto limpio; la consola lo conserva entre instrucciones.
+
+La lectura va de izquierda a derecha: **Código Python → Operación actual → Estado del arreglo**. Los tres paneles tienen la misma altura en escritorio y se reorganizan en pantallas estrechas. Ejemplos y Laboratorio comparten un interlineado de 2.6 (36.4 px con fuente de 14 px).
+
+La barra de ruta aparece al final de todos los módulos, indica la sección actual y ofrece el siguiente destino sin imponer un orden. En Inicio, la tarjeta del arreglo recorre sus cuatro posiciones cada 1.6 segundos; permite pausar o seleccionar un valor. Se detiene al salir de Inicio y respeta `prefers-reduced-motion`. Ayuda / Glosario usa un acento naranja y los controles tienen respuestas suaves al pasar el mouse y al enfocarlos con teclado.
 
 Se admiten listas, escalares, condiciones, ciclos y operaciones básicas. Esta versión no admite módulos ni funciones/clases propias. La estructura utilizada es `list` de Python; no se presenta como un arreglo de tamaño fijo. Los límites son 200 líneas, 10 000 caracteres de código/salida, 1500 eventos de seguimiento y 3 s entre eventos; un vigilante externo termina el worker después de 8 s. No hay una cuota estricta de memoria por programa. Se visualizan hasta 30 variables y los primeros 100 elementos de cada lista.
 

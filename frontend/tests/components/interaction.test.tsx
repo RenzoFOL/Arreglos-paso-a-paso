@@ -16,8 +16,38 @@ beforeEach(()=>{
    return {ok:true,json:async()=>({success,explanation:success?item.explanation:item.hint,result:success?item.result:item.values})}
  }))
 })
-afterEach(()=>{cleanup();recorder.discard();vi.unstubAllGlobals()})
+afterEach(()=>{cleanup();recorder.discard();vi.useRealTimers();vi.unstubAllGlobals()})
 describe('recorridos funcionales',()=>{
+ it('la ruta acompaña la navegación y conserva el destino contextual',()=>{
+   render(<App/>)
+   const route=screen.getByRole('region',{name:'Ruta sugerida'})
+   fireEvent.click(within(route).getByRole('button',{name:'2 Ejemplos'}))
+   expect(within(route).getByRole('button',{name:'2 Ejemplos'}).getAttribute('aria-current')).toBe('step')
+   fireEvent.click(within(route).getByRole('button',{name:'Continuar a Laboratorio'}))
+   expect(within(route).getByRole('button',{name:'3 Laboratorio'}).getAttribute('aria-current')).toBe('step')
+   fireEvent.click(within(route).getByRole('button',{name:'1 Teoría'}))
+   expect(screen.getByRole('heading',{name:'Teoría',exact:true})).toBeTruthy()
+   expect(within(route).getByRole('button',{name:'Continuar a Ejemplos'})).toBeTruthy()
+ })
+ it('el recorrido automático se puede pausar y respeta movimiento reducido',()=>{
+   vi.useFakeTimers()
+   let motionChange:()=>void=()=>{}
+   const media={matches:false,addEventListener:(_type:string,listener:()=>void)=>{motionChange=listener},removeEventListener:()=>{}}
+   vi.stubGlobal('matchMedia',()=>media)
+   render(<App/>)
+   act(()=>{vi.advanceTimersByTime(1600)})
+   expect(screen.getByText('Índice 1 → valor 4')).toBeTruthy()
+   fireEvent.click(screen.getByRole('button',{name:'Pausar recorrido'}))
+   act(()=>{vi.advanceTimersByTime(3200)})
+   expect(screen.getByText('Índice 1 → valor 4')).toBeTruthy()
+   fireEvent.click(screen.getByRole('button',{name:'Valor 12 en índice 2',exact:true}))
+   expect(screen.getByText('Índice 2 → valor 12')).toBeTruthy()
+   fireEvent.click(screen.getByRole('button',{name:'Reanudar recorrido'}))
+   act(()=>{media.matches=true;motionChange()})
+   act(()=>{vi.advanceTimersByTime(3200)})
+   expect(screen.getByText('Índice 2 → valor 12')).toBeTruthy()
+   expect(screen.queryByRole('button',{name:'Pausar recorrido'})).toBeNull()
+ })
  it('clic en fondo de tarjeta navega y mantiene progreso al volver',async()=>{
    render(<App/>);fireEvent.click(document.querySelector('[data-study-id="card-Teoría"]')!)
    expect(screen.getByRole('heading',{name:'Teoría',exact:true})).toBeTruthy()
