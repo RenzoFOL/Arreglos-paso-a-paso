@@ -65,9 +65,21 @@ La interfaz estará en `http://localhost:5173`. Vite envía `/api` al puerto 800
 5. Usar Anterior, Siguiente, Reproducir, Pausar o el selector de paso para revisar la traza. Retroceder consulta un estado guardado; no deshace la ejecución del motor.
 6. En el laboratorio, desplegar **Consola interactiva** dentro de **Estado del arreglo** para consultar y modificar las variables de la última ejecución. Usa el editor para bloques de varias líneas. Ejecutar el editor empieza un contexto limpio; la consola lo conserva entre instrucciones.
 
-La lectura va de izquierda a derecha: **Código Python → Operación actual → Estado del arreglo**. Los tres paneles tienen la misma altura en escritorio y se reorganizan en pantallas estrechas. Ejemplos y Laboratorio comparten un interlineado de 2.6 (36.4 px con fuente de 14 px).
+La lectura va de izquierda a derecha: **Código Python → Operación actual → Estado del arreglo**. Los tres paneles tienen altura acotada y desplazamiento interno: una lista extensa de variables no estira el editor ni aleja sus botones. La línea resaltada se desplaza automáticamente al área visible. En pantallas estrechas los paneles se reorganizan y conservan alturas acotadas.
 
-La barra de ruta aparece al final de todos los módulos, indica la sección actual y ofrece el siguiente destino sin imponer un orden. En Inicio, la tarjeta del arreglo recorre sus cuatro posiciones cada 1.6 segundos; permite pausar o seleccionar un valor. Se detiene al salir de Inicio y respeta `prefers-reduced-motion`. Ayuda / Glosario usa un acento naranja y los controles tienen respuestas suaves al pasar el mouse y al enfocarlos con teclado.
+El icono **Ampliar editor a todo el ancho**, en la cabecera Código Python de Ejemplos y Laboratorio, pone el editor arriba y los otros dos paneles debajo. El mismo botón restaura las columnas. Cambiar de distribución conserva código, variables y paso actual; no reinicia Python.
+
+La barra de ruta aparece al final de todos los módulos, indica la sección actual y ofrece el siguiente destino sin imponer un orden. En Inicio, la tarjeta del arreglo recorre sus cuatro posiciones cada 1.6 segundos; permite pausar o seleccionar un valor. Se detiene al salir de Inicio. Ayuda / Glosario usa un acento naranja y los controles tienen respuestas suaves al pasar el mouse y al enfocarlos con teclado.
+
+**Accesibilidad**, disponible en la cabecera de todas las pantallas, permite ajustar:
+
+- Animaciones: preferencia del sistema (predeterminada), activadas o reducidas. Una elección explícita prevalece sobre `prefers-reduced-motion`.
+- Recorrido automático de Inicio. El movimiento reducido lo detiene; la reproducción de pasos del laboratorio sigue siendo una acción manual.
+- Texto: 100 %, 115 % o 130 %, incluido el editor.
+- Interlineado de código: compacto (1.8), cómodo (2.6, predeterminado) o amplio (3.1).
+- Contraste original o reforzado, manteniendo selección y errores identificables por texto.
+
+Las preferencias se conservan únicamente en `localStorage` del navegador, sin cuenta ni base de datos. **Restablecer preferencias** vuelve a los valores predeterminados. Esto no guarda el código del alumno ni resultados de evaluación. Si el navegador impide el almacenamiento, los ajustes siguen funcionando durante la página abierta.
 
 Se admiten listas, escalares, condiciones, ciclos y operaciones básicas. Esta versión no admite módulos ni funciones/clases propias. La estructura utilizada es `list` de Python; no se presenta como un arreglo de tamaño fijo. Los límites son 200 líneas, 10 000 caracteres de código/salida, 1500 eventos de seguimiento y 3 s entre eventos; un vigilante externo termina el worker después de 8 s. No hay una cuota estricta de memoria por programa. Se visualizan hasta 30 variables y los primeros 100 elementos de cada lista.
 

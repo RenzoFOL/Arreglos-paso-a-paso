@@ -8,6 +8,7 @@ import { csv,validateSession } from '../../src/study/model'
 import exercises from '../../../back/app/exercises.json'
 vi.mock('../../src/Laboratory',()=>({default:()=> <div>Laboratorio</div>,EditableExamples:()=> <div>Ejemplos</div>}))
 beforeEach(()=>{
+ localStorage.clear()
  vi.stubGlobal('scrollTo',()=>{})
  vi.stubGlobal('fetch',vi.fn(async(url:string,opts?:RequestInit)=>{
    if(url.endsWith('/exercises'))return {ok:true,json:async()=>exercises.map(({correct,result,explanation,...e})=>e)}
@@ -18,6 +19,31 @@ beforeEach(()=>{
 })
 afterEach(()=>{cleanup();recorder.discard();vi.useRealTimers();vi.unstubAllGlobals()})
 describe('recorridos funcionales',()=>{
+ it('accesibilidad persiste preferencias, permite activar animaciones y restablecerlas',()=>{
+   vi.stubGlobal('matchMedia',()=>({matches:true,addEventListener:()=>{},removeEventListener:()=>{}}))
+   const app=render(<App/>)
+   expect(document.documentElement.dataset.motion).toBe('reduced')
+   fireEvent.click(screen.getByRole('button',{name:'Accesibilidad',exact:true}))
+   fireEvent.change(screen.getByLabelText('Animaciones y transiciones'),{target:{value:'full'}})
+   fireEvent.change(screen.getByLabelText('Tamaño del texto'),{target:{value:'larger'}})
+   fireEvent.change(screen.getByLabelText('Separación entre líneas de código'),{target:{value:'wide'}})
+   fireEvent.change(screen.getByLabelText('Contraste'),{target:{value:'high'}})
+   fireEvent.click(screen.getByLabelText('Recorrido automático en Inicio'))
+   expect(document.documentElement.dataset.motion).toBe('full')
+   expect(document.documentElement.dataset.contrast).toBe('high')
+   expect(document.documentElement.style.getPropertyValue('--text-scale')).toBe('1.3')
+   expect(document.documentElement.style.getPropertyValue('--code-line-height')).toBe('3.1')
+   fireEvent.keyDown(document,{key:'Escape'})
+   expect(screen.queryByRole('dialog')).toBeNull()
+   app.unmount();render(<App/>)
+   fireEvent.click(screen.getByRole('button',{name:'Accesibilidad',exact:true}))
+   expect((screen.getByLabelText('Animaciones y transiciones') as HTMLSelectElement).value).toBe('full')
+   expect((screen.getByLabelText('Recorrido automático en Inicio') as HTMLInputElement).checked).toBe(false)
+   fireEvent.click(screen.getByRole('button',{name:'Restablecer preferencias'}))
+   expect(document.documentElement.dataset.motion).toBe('reduced')
+   expect(document.documentElement.dataset.contrast).toBe('normal')
+   expect(document.documentElement.style.getPropertyValue('--text-scale')).toBe('1')
+ })
  it('la ruta acompaña la navegación y conserva el destino contextual',()=>{
    render(<App/>)
    const route=screen.getByRole('region',{name:'Ruta sugerida'})

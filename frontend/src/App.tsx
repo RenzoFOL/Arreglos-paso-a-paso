@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import Laboratory, { EditableExamples } from "./Laboratory"
 import { api } from "./api"
 import { signal } from "./events"
+import { AccessibilityProvider, AccessibilitySettings, useAccessibility } from "./Accessibility"
 
 type Module = "Inicio" | "Teoría" | "Ejemplos" | "Laboratorio" | "Práctica"
 type Scenario = "Modificar" | "Consultar" | "Recorrer" | "Caso con error"
@@ -16,27 +17,21 @@ const initial = [8, 4, 12, 6]
 function HeroArray({ active }: { active: boolean }) {
   const [selected, setSelected] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [reduced, setReduced] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
+  const { preferences, reducedMotion: reduced } = useAccessibility()
   useEffect(() => {
-    const media = window.matchMedia?.('(prefers-reduced-motion: reduce)')
-    const update = () => setReduced(media?.matches ?? false)
-    media?.addEventListener('change', update)
-    return () => media?.removeEventListener('change', update)
-  }, [])
-  useEffect(() => {
-    if (!active || paused || reduced) return
+    if (!active || paused || reduced || !preferences.autoplay) return
     const timer = setInterval(() => {
       if (!document.hidden) setSelected(i => (i + 1) % initial.length)
     }, 1600)
     return () => clearInterval(timer)
-  }, [active, paused, reduced])
+  }, [active, paused, reduced, preferences.autoplay])
   return <section className="hero-array" aria-label="Recorrido de un arreglo de cuatro posiciones">
     <div className="hero-array-top"><span className="code-file"><Icon name="code" size={16} />Un arreglo, cuatro posiciones</span><span className="badge">Python</span></div>
     <div className="hero-code">valores = <span>[8, 4, 12, 6]</span></div>
     <ArrayView values={initial} selected={selected} onSelect={i => { setSelected(i); setPaused(true) }} />
     <div className="hero-array-caption">
       <p><span className="tiny-dot" />Índice {selected} → valor {initial[selected]}</p>
-      {!reduced && <button className="text-link" aria-pressed={paused} onClick={() => setPaused(p => !p)}>{paused ? 'Reanudar recorrido' : 'Pausar recorrido'}</button>}
+      {!reduced && preferences.autoplay && <button className="text-link" aria-pressed={paused} onClick={() => setPaused(p => !p)}>{paused ? 'Reanudar recorrido' : 'Pausar recorrido'}</button>}
     </div>
     <div className="hero-progress" aria-hidden="true">{initial.map((_, i) => <span key={i} className={i === selected ? 'current' : ''} />)}</div>
   </section>
@@ -62,6 +57,7 @@ function SuggestedRoute({ current, go }: { current: Module; go: (m: Module) => v
 }
 function Icon({ name = "arrow", size = 20 }: { name?: string; size?: number }) {
   const paths: Record<string, string> = {
+    accessibility: "M12 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM4 9l8 2 8-2M12 11v5m0 0-4 6m4-6 4 6",
     arrow: "M5 12h14m-5-5 5 5-5 5",
     book: "M12 6v15M3 4c4-1 6 0 9 2 3-2 5-3 9-2v15c-4-1-6 0-9 2-3-2-5-3-9-2Z",
     code: "m8 7-5 5 5 5m8-10 5 5-5 5m-3-12-2 14",
@@ -574,7 +570,7 @@ function Modal({
       if (e.key === "Escape") close()
       if (e.key === "Tab") {
         const buttons = ref.current?.querySelectorAll<HTMLElement>(
-          "button:not(:disabled), [href], [tabindex='0']",
+          "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex='0']",
         )
         if (!buttons?.length) return
         const first = buttons[0],
@@ -615,7 +611,7 @@ function Modal({
           <button
             className="icon-button"
             aria-label={`Cerrar ${
-              title === "Ayuda rápida" ? "ayuda" : "comparación"
+              title === "Ayuda rápida" ? "ayuda" : title.toLowerCase()
             }`}
             onClick={close}
           >
@@ -628,17 +624,22 @@ function Modal({
   )
 }
 export default function App() {
+  return <AccessibilityProvider><Application /></AccessibilityProvider>
+}
+function Application() {
   const [module, setModule] = useState<Module>("Inicio")
   const [visited, setVisited] = useState<Module[]>(["Inicio"])
   const [returnTo, setReturnTo] = useState<Module>("Teoría")
   const [example, setExample] = useState<Scenario>("Modificar")
   const [concept, setConcept] = useState(0)
   const [help, setHelp] = useState(false)
+  const [accessibility, setAccessibility] = useState(false)
   const go = (m: Module) => {
     setModule(m)
     setVisited(v => v.includes(m) ? v : [...v, m])
     signal("navigate", m)
     setHelp(false)
+    setAccessibility(false)
     window.scrollTo(0, 0)
   }
   const openExample = (s: Scenario) => {
@@ -668,10 +669,12 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <button className="help-button" onClick={() => { setHelp(true); signal("help_open") }}>
-          <Icon name="help" />
-          Ayuda / Glosario
-        </button>
+        <div className="header-tools">
+          <button className="accessibility-button" aria-haspopup="dialog" onClick={() => { setHelp(false); setAccessibility(true); signal('accessibility_open') }}><Icon name="accessibility" />Accesibilidad</button>
+          <button className="help-button" aria-haspopup="dialog" onClick={() => { setAccessibility(false); setHelp(true); signal("help_open") }}>
+            <Icon name="help" />Ayuda / Glosario
+          </button>
+        </div>
       </header>
       <a className="skip-link" href="#contenido">Saltar al contenido</a>
       <main id="contenido" data-study-screen={module}>
@@ -747,6 +750,7 @@ export default function App() {
         </span>
         <span>Explora a tu ritmo, sin crear una cuenta.</span>
       </footer>
+      {accessibility && <Modal title="Accesibilidad" close={() => setAccessibility(false)}><AccessibilitySettings /><Button onClick={() => setAccessibility(false)}>Listo, volver a mi pantalla</Button></Modal>}
       {help && (
         <Modal title="Ayuda rápida" close={() => setHelp(false)}>
           <p className="muted">Un glosario para acompañar tu exploración.</p>

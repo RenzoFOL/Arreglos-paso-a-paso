@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import './functional.css'
+import './accessibility.css'
 
 const Study = import.meta.env.VITE_STUDY_MODE === 'true' ? lazy(() => import('./study/Study')) : null
 

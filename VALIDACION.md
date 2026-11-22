@@ -1,4 +1,4 @@
-# Estado de verificación — 21 de noviembre de 2026
+# Estado de verificación — 22 de noviembre de 2026
 
 Esta es una primera implementación funcional. No se declara validada con participantes ni lista para una sesión formal sin piloto.
 
@@ -9,18 +9,20 @@ Esta es una primera implementación funcional. No se declara validada con partic
 | Exclusión del módulo de captura/panel en los JS normales | Verificada |
 | Ruta de exportación ausente en FastAPI normal | Verificada: 404 |
 | 5 pruebas del motor y métricas con Pyodide real | Correctas |
-| 7 pruebas de componentes e instrumentación en DOM simulado | Correctas |
+| 9 pruebas de componentes e instrumentación en DOM simulado | Correctas |
 | 4 pruebas de API y Excel | Correctas |
 
 Las pruebas del motor comprueban estados posteriores a cada línea, referencias compartidas, consola persistente, salida, recorridos, errores de índice/sintaxis, límites de ejecución y tiempos con pausas.
 
 Las pruebas de componentes comprueban clic en el fondo de la tarjeta, conservación del progreso al cambiar de sección, recuperación ante error de API, consentimiento, inicio de tarea, primer clic, navegación registrada, cierre de tarea/sesión y exclusión de controles del observador. También comprueban la ruta contextual y la pausa del recorrido automático, incluida la preferencia de movimiento reducido. No sustituyen una revisión visual: el laboratorio se prueba separadamente con Pyodide real y las llamadas de red de esos componentes usan respuestas controladas.
 
+Las pruebas de accesibilidad comprueban persistencia, restablecimiento y elección explícita de animaciones frente a la preferencia del sistema. Una prueba del laboratorio con motor simulado comprueba que ampliar/restaurar conserva código y paso sin reiniciar ni ejecutar otra vez; el motor real se comprueba por separado.
+
 Las pruebas de API comprueban las 30 combinaciones de respuesta de los diez ejercicios, validación de entradas, omisión de respuestas en el catálogo y un Excel que conserva las notas como texto (sin ejecutarlas como fórmulas).
 
 ## Comprobaciones preparadas, todavía pendientes en navegador y Docker
 
-- Playwright incluye cuatro recorridos completos: tarjetas/práctica, worker/consola, ruta contextual/alineación/interlineado/animación y sesión con JSON/PNG. Se intentaron ejecutar nuevamente el 21 de noviembre, pero Chromium no pudo iniciar en el entorno de desarrollo: `socket() failed: Operation not permitted`. No se presentan estas pruebas como aprobadas.
+- Playwright incluye cinco recorridos completos: tarjetas/práctica, worker/consola, ruta contextual/alineación/interlineado/animación, sesión con JSON/PNG y código largo con muchas variables/ampliación/desplazamiento. El intento del 21 de noviembre quedó bloqueado porque Chromium no pudo iniciar: `socket() failed: Operation not permitted`. El nuevo recorrido del 22 de noviembre queda preparado para un entorno con navegador disponible. No se presentan estas pruebas como aprobadas.
 - Docker no está instalado en este entorno. Los cuatro Dockerfiles y los dos Compose están preparados; su construcción y arranque quedan pendientes. El workflow de GitHub incluye esas comprobaciones y una solicitud a `/api/health` a través del proxy de producción.
 - Falta revisar visualmente el diseño a 1366×768, 1920×1080 y ancho reducido, el contraste efectivo, el foco, las transiciones y las descargas reales.
 - Falta el piloto moderado: contrastar el intervalo capturado con un video y comprobar recuperación tras recarga, clasificación, JSON, CSV, Excel y mapas. Los mapas usan un esquema de controles, no capturas de pantalla.

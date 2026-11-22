@@ -11,6 +11,7 @@ type Example = keyof typeof examples
 type Frame = { line: number | null; nextLine: number | null; variables: Record<string, unknown>; aliases: Record<string, string[]>; output: string; error?: string; elapsedMs: number }
 const display = (value: unknown) => JSON.stringify(value)
 function Experience({ initialExample = 'Modificar', guided = false }: { initialExample?: Example; guided?: boolean }) {
+  const [expanded, setExpanded] = useState(false)
   const [example, setExample] = useState<Example>(initialExample)
   const [source, setSource] = useState(examples[initialExample])
   const [frames, setFrames] = useState<Frame[]>([]), [cursor, setCursor] = useState(0)
@@ -74,12 +75,12 @@ function Experience({ initialExample = 'Modificar', guided = false }: { initialE
   }
   const stop = () => { clearTimeout(timeout.current); worker.current?.terminate(); setBusy(false); setReady(false); setStatus('Detenido'); setMessage('El código se conserva. Reinicia el motor para continuar.'); signal('execution_stop') }
   const step = (amount: number) => { setPlaying(false); setCursor(c => Math.min(frames.length - 1, Math.max(0, c + amount))); signal('trace_step', String(amount)) }
-  return <section data-study-state={`${guided ? 'examples' : 'lab'}:${example}:${cursor}:${status}`}>
+  return <section data-study-state={`${guided ? 'examples' : 'lab'}:${example}:${cursor}:${status}:${expanded ? 'wide' : 'columns'}`}>
     <div className="page-title"><div className="eyebrow">{guided ? 'DEL CÓDIGO AL ARREGLO' : 'ESCRIBE, EJECUTA Y OBSERVA'}</div><h1>{guided ? 'Ejemplos paso a paso' : 'Laboratorio visual'}</h1><p>{guided ? 'Elige un ejemplo, ejecútalo y revisa qué cambia en cada línea.' : 'Modifica el código Python y observa sus variables, listas y salida.'}</p></div>
     {guided && <div className="tabs" aria-label="Ejemplos Python">{Object.keys(examples).map(key => <button key={key} data-study-id={`example-${key}`} disabled={busy} aria-pressed={key === example} className={key === example ? 'active' : ''} onClick={() => select(key as Example)}>{key === 'Caso con error' ? 'Ejemplo con error' : key === 'Recorrer' ? 'Recorrer un arreglo' : key}</button>)}</div>}
     <div className="lab-status" role="status"><span className={`status-dot ${busy ? 'running' : ''}`} /><strong>{status}</strong><span>Python real · listas unidimensionales</span></div>
-    <div className="lab-grid">
-      <section className="panel console-editor" aria-label="Editor de código"><div className="panel-heading"><h2>Código Python</h2><span className="badge">Editable</span></div>
+    <div id={guided ? 'examples-workspace' : 'lab-workspace'} className={`lab-grid ${expanded ? 'editor-expanded' : ''}`}>
+      <section className="panel console-editor" aria-label="Editor de código"><div className="panel-heading"><h2>Código Python</h2><span className="badge">Editable</span><button className="expand-editor" aria-label={expanded ? 'Restaurar editor en columnas' : 'Ampliar editor a todo el ancho'} title={expanded ? 'Restaurar distribución en columnas' : 'Código arriba; operación y resultados debajo'} aria-pressed={expanded} aria-controls={guided ? 'examples-workspace' : 'lab-workspace'} onClick={() => { setExpanded(value => !value); signal('editor_layout', expanded ? 'columns' : 'wide') }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={expanded ? 'M9 3v6H3m12-6v6h6M9 21v-6H3m12 6v-6h6' : 'M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6'} /></svg></button></div>
         <div className="editor-file"><span className="status-dot" />arreglos.py<span>Escribe aquí</span></div>
         <CodeEditor source={source} disabled={busy} onChange={s => { if (s !== source) { setSource(s); setFrames([]); setPlaying(false); setMessage(''); setStatus(ready ? 'Listo' : status) } }} line={!consoleTrace ? frame?.line || frame?.nextLine || 0 : 0} />
         <div className="console-toolbar"><button className="button primary" data-study-id="run" disabled={!ready || busy || !source.trim()} onClick={() => run()}>Ejecutar código</button><button className="button secondary" disabled={!busy} onClick={stop}>Detener</button><button className="text-link" onClick={() => { if (!window.confirm('Se borrarán las variables y la consola; tu código se conservará. ¿Reiniciar motor?')) return; setFrames([]); setHistory([]); setPlaying(false); setMessage(''); boot(); signal('engine_reset') }}>Reiniciar motor</button></div>
@@ -87,18 +88,18 @@ function Experience({ initialExample = 'Modificar', guided = false }: { initialE
       </section>
       <section className="panel operation-panel" aria-label="Seguimiento de la ejecución">
         <div className="panel-heading"><h2>Operación actual</h2></div>
-        <div className="operation-content">
+        <div className="operation-content" tabIndex={0} role="region" aria-label="Detalle de la operación, desplazable">
           <span className="step-pill">{frames.length ? `Paso ${cursor + 1} de ${frames.length}` : 'Sin ejecución'}</span>
           <pre className="current-instruction"><code>{frame ? traceSource.split('\n')[(frame.line || frame.nextLine || 1) - 1] || '# Fin de la ejecución' : '# Esperando instrucción'}</code></pre>
           <p className="step-announcement" aria-live="polite">{frame ? (frame.error ? `Error en línea ${frame.line ?? '—'}` : frame.line ? `Después de la línea ${frame.line}${frame.nextLine ? ` · siguiente: ${frame.nextLine}` : ' · fin'}` : `Antes de la línea ${frame.nextLine}`) : 'Ejecuta el código para observar los cambios.'}</p>
           {consoleTrace && frame && <p className="muted small">Instrucción de la consola interactiva.</p>}
           <div className="trace-controls"><button className="button secondary" disabled={!frames.length || cursor === 0} onClick={() => step(-1)}>Anterior</button><button className="button primary" data-study-id="next-step" disabled={!frames.length || cursor === frames.length - 1} onClick={() => step(1)}>Siguiente paso</button><button className="button secondary" disabled={!frames.length || cursor === frames.length - 1} onClick={() => setPlaying(p => !p)}>{playing ? 'Pausar' : 'Reproducir'}</button></div>
           {frames.length > 0 && <label className="trace-range">Revisar paso <input type="range" min="0" max={frames.length - 1} value={cursor} onChange={e => { setPlaying(false); setCursor(Number(e.target.value)); signal('trace_seek', e.target.value) }} /></label>}
-          <p className="small">El código resaltado corresponde al estado que ves a la derecha. Puedes avanzar o volver a un paso anterior.</p>
+          <p className="small">El código resaltado corresponde al estado que ves en Estado del arreglo. Puedes avanzar o volver a un paso anterior.</p>
         </div>
       </section>
       <section className="panel variables-panel" aria-label="Resultados de la ejecución"><div className="panel-heading"><h2>Estado del arreglo</h2></div>
-        <div className="variables-content">
+        <div className="variables-content" tabIndex={0} role="region" aria-label="Variables y salida, desplazables">
           <div className="small-label">VARIABLES Y RESULTADOS</div>
           {!frame && <p className="empty-state">Los resultados aparecerán al ejecutar el código.</p>}
           {frame && Object.keys(frame.variables).length === 0 && <p className="empty-state">Todavía no hay variables visibles.</p>}
