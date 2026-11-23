@@ -4,6 +4,8 @@ import { api } from "./api"
 import { signal } from "./events"
 import { AccessibilityProvider, AccessibilitySettings, useAccessibility } from "./Accessibility"
 
+import { studyReady, type StudyPreparation } from "./studyBridge"
+
 type Module = "Inicio" | "Teoría" | "Ejemplos" | "Laboratorio" | "Práctica"
 type Scenario = "Modificar" | "Consultar" | "Recorrer" | "Caso con error"
 const modules: Module[] = [
@@ -320,7 +322,7 @@ type PracticeExercise = {
 
 
 
-function Practice({ openExample }: { openExample: (s: Scenario) => void }) {
+function Practice({ openExample, preparation }: { openExample: (s: Scenario) => void; preparation?: StudyPreparation }) {
   const [practiceExercises, setExercises] = useState<PracticeExercise[]>([])
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
@@ -328,13 +330,14 @@ function Practice({ openExample }: { openExample: (s: Scenario) => void }) {
   const [answer, setAnswer] = useState<{success:boolean; explanation:string; result:number[]} | null>(null)
   const load = () => { setLoading(true); setError(""); api<PracticeExercise[]>("/exercises").then(setExercises).catch(e => setError(e.message)).finally(() => setLoading(false)) }
   useEffect(load, [])
-  const [exerciseIndex, setExerciseIndex] = useState(0)
+  const [exerciseIndex, setExerciseIndex] = useState(preparation?.exercise || 0)
   const [choice, setChoice] = useState<number | null>(null)
   const [checked, setChecked] = useState(false)
   const [hint, setHint] = useState(false)
   const [completed, setCompleted] = useState<boolean[]>(() =>
     Array(10).fill(false),
   )
+  useEffect(()=>{if(!loading && practiceExercises.length) studyReady(preparation)},[loading,practiceExercises,preparation])
   const exercise = practiceExercises[exerciseIndex]
   const success = checked && answer?.success === true
   const resetResponse = () => {
@@ -628,6 +631,17 @@ export default function App() {
 }
 function Application() {
   const [module, setModule] = useState<Module>("Inicio")
+  const [preparation, setPreparation] = useState<StudyPreparation>()
+  useEffect(()=>{
+    if(import.meta.env.VITE_STUDY_MODE !== 'true') return
+    const prepare=(event: Event)=>{
+      const next=(event as CustomEvent<StudyPreparation>).detail
+      setPreparation(next);setModule(next.module);setVisited([next.module]);setExample(next.example||'Modificar');setConcept(0);setHelp(false);setAccessibility(false);setReturnTo('Teoría');window.scrollTo(0,0)
+    }
+    window.addEventListener('study-prepare',prepare)
+    return ()=>window.removeEventListener('study-prepare',prepare)
+  },[])
+  useEffect(()=>{if(preparation && ['Inicio','Teoría'].includes(preparation.module)) studyReady(preparation)},[preparation])
   const [visited, setVisited] = useState<Module[]>(["Inicio"])
   const [returnTo, setReturnTo] = useState<Module>("Teoría")
   const [example, setExample] = useState<Scenario>("Modificar")
@@ -677,7 +691,7 @@ function Application() {
         </div>
       </header>
       <a className="skip-link" href="#contenido">Saltar al contenido</a>
-      <main id="contenido" data-study-screen={module}>
+      <main key={preparation?.token || "normal"} id="contenido" data-study-screen={module}>
         <div hidden={module !== "Inicio"}>
           <>
             <div className="home-hero">
@@ -739,9 +753,9 @@ function Application() {
           </>
         </div>
         <div hidden={module !== "Teoría"}>{visited.includes("Teoría") && <Theory openExample={openExample} startConcept={concept} />}</div>
-        <div hidden={module !== "Práctica"}>{visited.includes("Práctica") && <Practice openExample={openExample} />}</div>
-        <div hidden={module !== "Laboratorio"}>{visited.includes("Laboratorio") && <Laboratory />}</div>
-        <div hidden={module !== "Ejemplos"}>{visited.includes("Ejemplos") && <><button className="text-link back-link" onClick={() => go(returnTo)}>← Volver a {returnTo}</button><EditableExamples initialExample={example} /></>}</div>
+        <div hidden={module !== "Práctica"}>{visited.includes("Práctica") && <Practice openExample={openExample} preparation={preparation?.module === "Práctica" ? preparation : undefined} />}</div>
+        <div hidden={module !== "Laboratorio"}>{visited.includes("Laboratorio") && <Laboratory preparation={preparation?.module === "Laboratorio" ? preparation : undefined} />}</div>
+        <div hidden={module !== "Ejemplos"}>{visited.includes("Ejemplos") && <><button className="text-link back-link" onClick={() => go(returnTo)}>← Volver a {returnTo}</button><EditableExamples initialExample={example} preparation={preparation?.module === "Ejemplos" ? preparation : undefined} /></>}</div>
         <SuggestedRoute current={module} go={go} />
       </main>
       <footer>

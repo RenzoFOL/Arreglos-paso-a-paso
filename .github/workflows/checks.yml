@@ -33,6 +33,12 @@ jobs:
         working-directory: back
       - run: npm ci && npx playwright install --with-deps chromium && npm run test:e2e
         working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pruebas-navegador
+          path: frontend/test-results/
+          retention-days: 7
   containers:
     runs-on: ubuntu-latest
     steps:

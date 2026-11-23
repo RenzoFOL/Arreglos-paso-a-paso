@@ -1,9 +1,10 @@
-export type Result = 'A' | 'AU' | 'N' | 'NC' | 'SC' | 'NE'
-export type Task = { id: string; prepared: number; start: number | null; end: number | null; result: Result | null; note: string; adjustedStart?: number | null; adjustedEnd?: number | null }
+export type Result = 'A' | 'AU' | 'AS' | 'N' | 'NC' | 'SC' | 'NE'
+export type Task = { id: string; prepared: number; start: number | null; end: number | null; result: Result | null; note: string; kind?: string; outcome?: 'finished' | 'abandoned' | 'interrupted' | 'timeout'; assistance?: string[]; response?: string; proposedResult?: Result | null; measurementEnd?: number; firstInteraction?: number; adjustedStart?: number | null; adjustedEnd?: number | null }
 export type Layout = { x: number; y: number; w: number; h: number; text: string }[]
-export type Event = { seq: number; t: number; type: string; task: string | null; route: string; state: string; target: string; region: string; width: number; height: number; scrollY: number; x?: number; y?: number; detail: string; layout?: Layout }
-export type Session = { schemaVersion: 1; appVersion: string; id: string; participant: string; startedAt: string; consent: true; events: Event[]; tasks: Task[]; ended?: boolean }
-export const keyOf = (e: Event) => `${e.route} | ${e.state} | ${e.width}×${e.height} | scroll ${e.scrollY}`
+export type Event = { seq: number; t: number; type: string; task: string | null; route: string; state: string; target: string; region: string; width: number; height: number; scrollY: number; x?: number; y?: number; detail: string; layout?: Layout; context?: string }
+export type Session = { schemaVersion: 1; appVersion: string; id: string; participant: string; startedAt: string; consent: true; events: Event[]; tasks: Task[]; ended?: boolean; captureTruncated?: boolean; protocol?: string; guided?: GuidedState }
+export type GuidedState = { index: number; phase: 'countdown' | 'instructions' | 'running' | 'paused' | 'response' | 'sus' | 'likert' | 'comments' | 'done'; deadline?: number; sus: (number | null)[]; likert: (number | 'NU' | null)[]; comments: string[]; semester: string; questionCompleted?: { sus?: boolean; likert?: boolean; comments?: boolean } }
+export const keyOf = (e: Event) => `${e.task || "sin tarea"} | ${e.context || "legacy"} | ${e.route} | ${e.state} | ${e.width}×${e.height} | scroll ${e.scrollY}`
 export const isClick = (e: Event) => e.type === 'click' || e.type === 'first_click'
 export function download(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob), a = document.createElement('a')
@@ -24,6 +25,11 @@ export function validateSession(value: unknown): Session {
     if (e.layout && (!Array.isArray(e.layout) || e.layout.length > 150 || e.layout.some(r => ![r.x,r.y,r.w,r.h].every(Number.isFinite) || typeof r.text !== 'string'))) throw new Error('El esquema de pantalla es inválido.')
     if ((e.x != null && !Number.isFinite(e.x)) || (e.y != null && !Number.isFinite(e.y))) throw new Error('Coordenadas inválidas.')
   }
-  for (const t of s.tasks) if (typeof t.id !== 'string' || typeof t.note !== 'string' || !Number.isFinite(t.prepared) || ![null,'A','AU','N','NC','SC','NE'].includes(t.result) || [t.start,t.end,t.adjustedStart,t.adjustedEnd].some(v => v != null && (!Number.isFinite(v) || v < 0))) throw new Error('Una tarea contiene datos inválidos.')
+  for (const t of s.tasks) if (typeof t.id !== 'string' || typeof t.note !== 'string' || !Number.isFinite(t.prepared) || ![null,'A','AU','AS','N','NC','SC','NE'].includes(t.result) || [t.start,t.end,t.adjustedStart,t.adjustedEnd,t.measurementEnd,t.firstInteraction].some(v => v != null && (!Number.isFinite(v) || v < 0))) throw new Error('Una tarea contiene datos inválidos.')
+  if (s.guided) {
+    const g = s.guided
+    if (g.index === 20 && ['instructions','running','paused','response'].includes(g.phase) || g.deadline != null && !Number.isFinite(g.deadline)) throw new Error('Progreso de evaluación inválido.')
+    if (!Number.isInteger(g.index) || g.index < 0 || g.index > 20 || !['countdown','instructions','running','paused','response','sus','likert','comments','done'].includes(g.phase) || !Array.isArray(g.sus) || g.sus.length !== 10 || !g.sus.every(v => v === null || Number.isInteger(v) && v! >= 1 && v! <= 5) || !Array.isArray(g.likert) || g.likert.length !== 10 || !g.likert.every(v => v === null || v === 'NU' || Number.isInteger(v) && v! >= 1 && v! <= 5) || !Array.isArray(g.comments) || g.comments.length !== 3 || !g.comments.every(v => typeof v === 'string' && v.length <= 3000)) throw new Error('Cuestionarios o progreso inválidos.')
+  }
   return s
 }

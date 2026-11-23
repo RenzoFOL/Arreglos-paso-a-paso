@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { studyReady, type StudyPreparation } from './studyBridge'
 import CodeEditor from './CodeEditor'
 import { signal } from './events'
 export const examples = {
@@ -10,10 +11,10 @@ export const examples = {
 type Example = keyof typeof examples
 type Frame = { line: number | null; nextLine: number | null; variables: Record<string, unknown>; aliases: Record<string, string[]>; output: string; error?: string; elapsedMs: number }
 const display = (value: unknown) => JSON.stringify(value)
-function Experience({ initialExample = 'Modificar', guided = false }: { initialExample?: Example; guided?: boolean }) {
+function Experience({ initialExample = 'Modificar', guided = false, preparation }: { initialExample?: Example; guided?: boolean; preparation?:StudyPreparation }) {
   const [expanded, setExpanded] = useState(false)
   const [example, setExample] = useState<Example>(initialExample)
-  const [source, setSource] = useState(examples[initialExample])
+  const [source, setSource] = useState(preparation?.source || examples[initialExample])
   const [frames, setFrames] = useState<Frame[]>([]), [cursor, setCursor] = useState(0)
   const [status, setStatus] = useState('Preparando Python'), [busy, setBusy] = useState(false)
   const [ready, setReady] = useState(false), [message, setMessage] = useState('')
@@ -21,6 +22,8 @@ function Experience({ initialExample = 'Modificar', guided = false }: { initialE
   const [traceSource, setTraceSource] = useState(''), [consoleTrace, setConsoleTrace] = useState(false)
   const [duration, setDuration] = useState(0), [playing, setPlaying] = useState(false)
   const worker = useRef<Worker | null>(null), timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const preparing = useRef(!!preparation?.frame)
+  const preparedRun = useRef(false)
   const pending = useRef(''), frame = frames[cursor], previous = frames[cursor - 1]
   const boot = () => {
     worker.current?.terminate(); clearTimeout(timeout.current)
@@ -33,7 +36,8 @@ function Experience({ initialExample = 'Modificar', guided = false }: { initialE
       if (data.type === 'ready') { setReady(true); setStatus('Listo'); return }
       setBusy(false)
       if (data.type === 'result') {
-        setFrames(data.frames); setCursor(0); setDuration(data.durationMs)
+        setFrames(data.frames); setCursor(preparing.current ? preparation?.frame === 'last' ? data.frames.length-1 : preparation?.frame === 'line2' ? Math.max(0,data.frames.findIndex((f:Frame)=>f.line===2)) : 0 : 0); setDuration(data.durationMs)
+        if(preparing.current) { preparing.current=false; requestAnimationFrame(()=>studyReady(preparation)) }
         const error = data.frames.at(-1)?.error
         setStatus(error ? 'Ejecución con error' : 'Traza lista')
         setMessage(error || '')
@@ -48,6 +52,11 @@ function Experience({ initialExample = 'Modificar', guided = false }: { initialE
     w.postMessage({ type: 'boot' })
   }
   useEffect(() => { boot(); return () => { worker.current?.terminate(); clearTimeout(timeout.current) } }, [])
+  useEffect(()=>{
+    if(!ready || !preparation) return
+    if(preparation.frame) { if(!preparedRun.current) { preparedRun.current=true; run() } } else studyReady(preparation)
+  },[ready])
+  useEffect(()=>{if(import.meta.env.VITE_STUDY_MODE !== 'true')return;const freeze=()=>setPlaying(false);window.addEventListener('study-freeze',freeze);return()=>window.removeEventListener('study-freeze',freeze)},[])
   useEffect(() => {
     if (!playing) return
     const timer = setInterval(() => setCursor(c => {
@@ -93,7 +102,7 @@ function Experience({ initialExample = 'Modificar', guided = false }: { initialE
           <pre className="current-instruction"><code>{frame ? traceSource.split('\n')[(frame.line || frame.nextLine || 1) - 1] || '# Fin de la ejecución' : '# Esperando instrucción'}</code></pre>
           <p className="step-announcement" aria-live="polite">{frame ? (frame.error ? `Error en línea ${frame.line ?? '—'}` : frame.line ? `Después de la línea ${frame.line}${frame.nextLine ? ` · siguiente: ${frame.nextLine}` : ' · fin'}` : `Antes de la línea ${frame.nextLine}`) : 'Ejecuta el código para observar los cambios.'}</p>
           {consoleTrace && frame && <p className="muted small">Instrucción de la consola interactiva.</p>}
-          <div className="trace-controls"><button className="button secondary" disabled={!frames.length || cursor === 0} onClick={() => step(-1)}>Anterior</button><button className="button primary" data-study-id="next-step" disabled={!frames.length || cursor === frames.length - 1} onClick={() => step(1)}>Siguiente paso</button><button className="button secondary" disabled={!frames.length || cursor === frames.length - 1} onClick={() => setPlaying(p => !p)}>{playing ? 'Pausar' : 'Reproducir'}</button></div>
+          <div className="trace-controls"><button className="button secondary" disabled={!frames.length || cursor === 0} onClick={() => step(-1)}>Anterior</button><button className="button primary" data-study-id="next-step" disabled={!frames.length || cursor === frames.length - 1} onClick={() => step(1)}>Siguiente paso</button><button className="button secondary" disabled={!frames.length || cursor === frames.length - 1} onClick={() => {signal('trace_play',playing?'pause':'play');setPlaying(p => !p)}}>{playing ? 'Pausar' : 'Reproducir'}</button></div>
           {frames.length > 0 && <label className="trace-range">Revisar paso <input type="range" min="0" max={frames.length - 1} value={cursor} onChange={e => { setPlaying(false); setCursor(Number(e.target.value)); signal('trace_seek', e.target.value) }} /></label>}
           <p className="small">El código resaltado corresponde al estado que ves en Estado del arreglo. Puedes avanzar o volver a un paso anterior.</p>
         </div>
@@ -107,12 +116,12 @@ function Experience({ initialExample = 'Modificar', guided = false }: { initialE
           <div className="small-label console-output-label">SALIDA EN ESTE PASO</div><pre className="console-output">{frame?.output || 'Sin salida todavía'}</pre>
           {frame?.error && <div className="feedback error" role="alert">{frame.error}<p>Corrige el código y vuelve a ejecutarlo.</p></div>}
           {message && !frame?.error && <div className="feedback error" role="alert">{message}</div>}
-          {!guided && <details className="repl"><summary>Consola interactiva</summary><p>Consulta o modifica las variables de la última ejecución. Para ciclos de varias líneas usa el editor.</p><pre className="console-output">{history.join('\n\n') || 'Ejemplo: valores o print(valores[0])'}</pre><form onSubmit={e => { e.preventDefault(); run(true) }}><label htmlFor="command">Instrucción Python</label><input id="command" value={command} onChange={e => setCommand(e.target.value)} autoComplete="off" spellCheck={false} disabled={busy} /><button className="button primary" disabled={!ready || busy || !command.trim()}>Enviar instrucción</button></form></details>}
+          {!guided && <details className="repl" onToggle={e=>signal('console_toggle',e.currentTarget.open?'open':'closed')}><summary>Consola interactiva</summary><p>Consulta o modifica las variables de la última ejecución. Para ciclos de varias líneas usa el editor.</p><pre className="console-output">{history.join('\n\n') || 'Ejemplo: valores o print(valores[0])'}</pre><form onSubmit={e => { e.preventDefault(); run(true) }}><label htmlFor="command">Instrucción Python</label><input id="command" value={command} onChange={e => setCommand(e.target.value)} autoComplete="off" spellCheck={false} disabled={busy} /><button className="button primary" disabled={!ready || busy || !command.trim()}>Enviar instrucción</button></form></details>}
         </div>
       </section>
     </div>
     <details className="technical-details"><summary>Alcance y tiempo de ejecución</summary><p>Admite listas, variables, if, for, while y operaciones básicas. No incluye módulos ni funciones propias. Hasta 200 líneas, 1500 eventos de seguimiento y salida de 10 000 caracteres. Listas visualizadas: primeros 100 elementos. Tiempo con seguimiento: {duration.toFixed(2)} ms; incluye instrumentación, no la animación ni el tiempo de la tarea.</p></details>
   </section>
 }
-export default function Laboratory() { return <Experience /> }
-export function EditableExamples({ initialExample }: { initialExample?: Example }) { return <Experience guided initialExample={initialExample} /> }
+export default function Laboratory({ preparation }: { preparation?:StudyPreparation }) { return <Experience preparation={preparation} /> }
+export function EditableExamples({ initialExample, preparation }: { initialExample?: Example; preparation?:StudyPreparation }) { return <Experience guided initialExample={initialExample} preparation={preparation} /> }

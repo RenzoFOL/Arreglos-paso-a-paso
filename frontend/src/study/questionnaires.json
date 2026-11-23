@@ -1,0 +1,68 @@
+{
+  "SUS": [
+    "Me gustaría usar esta herramienta frecuentemente.",
+    "Considero que esta herramienta es innecesariamente compleja",
+    "Considero que la herramienta es fácil de usar.",
+    "Considero necesario el apoyo de personal experto para poder utilizar esta herramienta",
+    "Considero que las funciones de la herramienta están bien integradas",
+    "Considero que la herramienta presenta muchas contradicciones",
+    "Imagino que la mayoría de las personas aprenderían a usar esta herramienta rápidamente",
+    "Considero que el uso de esta herramienta es tedioso",
+    "Me sentí muy confiado al usar la herramienta",
+    "Necesité saber bastantes cosas antes de poder empezar a usar esta herramienta"
+  ],
+  "Likert": [
+    [
+      "L01",
+      "Me resultó claro dónde comenzar para encontrar los conceptos.",
+      "T01"
+    ],
+    [
+      "L02",
+      "Reconocí qué tarjetas y botones podía activar.",
+      "T01–T06"
+    ],
+    [
+      "L03",
+      "Pude reconocer en qué sección me encontraba.",
+      "T07–T10"
+    ],
+    [
+      "L04",
+      "Las señales al pasar el mouse me ayudaron a reconocer los elementos interactivos.",
+      "T01–T06"
+    ],
+    [
+      "L05",
+      "El resaltado del código me permitió reconocer el paso que estaba observando.",
+      "T11–T16"
+    ],
+    [
+      "L06",
+      "Pude distinguir el índice de un elemento y su valor en la visualización.",
+      "T11–T14"
+    ],
+    [
+      "L07",
+      "Los mensajes después de comprobar una respuesta me orientaron sobre cómo continuar.",
+      "T09–T10"
+    ],
+    [
+      "L08",
+      "Pude consultar el código y sus resultados sin perderme en el desplazamiento de la página.",
+      "T17"
+    ],
+    [
+      "L09",
+      "Los ajustes de accesibilidad me permitieron adaptar la presentación a mis necesidades.",
+      "T18–T19"
+    ],
+    [
+      "L10",
+      "La ayuda disponible me resultó útil cuando la consulté.",
+      "T05 y T20"
+    ]
+  ],
+  "SUS_source": "https://humanfactors.jmir.org/2020/4/e21161/",
+  "SUS_license": "CC BY 4.0"
+}
