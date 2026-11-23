@@ -27,7 +27,7 @@ test('20 tareas digitales, pausa, cuestionarios y una descarga ZIP local',async(
   if(n===12)await expect(page.getByText('Después de la línea 2',{exact:false})).toBeVisible()
   if(n===14)await expect(page.locator('#lab-workspace .cm-content')).toContainText('eliminado = valores.pop(0)')
   if(n===15){await expect(page.locator('#lab-workspace .console-output').first()).toContainText('[10, 12, 9]');await expect(page.locator('.step-announcement')).toContainText('fin')}
-  if(n===17)await expect(page.locator('#lab-workspace .cm-content')).toContainText('dato18 = 18')
+  if(n===17){await page.locator('#lab-workspace .cm-content').focus();await page.keyboard.press('Control+End');await expect(page.locator('#lab-workspace .cm-content')).toContainText('dato18 = 18')}
   await page.getByRole('button',{name:'■ No realizar',exact:true}).click()
  }
  await expect(page.getByRole('dialog',{name:'Cuestionario SUS'})).toBeVisible()

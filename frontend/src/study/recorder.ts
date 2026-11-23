@@ -11,7 +11,9 @@ export const state = () => ({ session, active, paused, activeTask, backupWarning
 const now = () => session ? Math.max(0, performance.timeOrigin + performance.now() - Date.parse(session.startedAt)) : 0
 function persist() {
   if (!session) return
-  try { sessionStorage.setItem(STORAGE, JSON.stringify(session)); backupWarning = '' } catch { backupWarning = 'No se pudo guardar la copia temporal. Descarga los resultados antes de salir.'; notify() }
+  try { const contexts:string[]=[]; const indexes=new Map<string,number>();
+    const saved={...session,storageContexts:contexts,events:session.events.map(e=>{if(!e.context)return e;let i=indexes.get(e.context);if(i==null){i=contexts.length;indexes.set(e.context,i);contexts.push(e.context)}return {...e,context:i}})};
+    sessionStorage.setItem(STORAGE, JSON.stringify(saved)); backupWarning = '' } catch { backupWarning = 'No se pudo guardar la copia temporal. Descarga los resultados antes de salir.'; notify() }
 }
 function changed() { notify(); if (!timer) timer = setTimeout(() => { timer = undefined; persist() }, 800) }
 function screen() {
@@ -34,13 +36,16 @@ export function record(type: string, partial: Partial<Event> = {}, force = false
 }
 export function begin(participant: string) {
   if (!/^P\d{2,4}$/.test(participant)) throw new Error('Usa un identificador como P01.')
-  session = { schemaVersion: 1, appVersion: '0.2.0-study', id: crypto.randomUUID(), participant, startedAt: new Date().toISOString(), consent: true, tasks: [], events: [] }
+  session = { schemaVersion: 1, appVersion: '0.2.0-study', id: crypto.randomUUID(), participant, startedAt: new Date().toISOString(), consent: true, environment:{userAgent:navigator.userAgent,language:navigator.language,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone}, tasks: [], events: [] }
   active = true; paused = false; activeTask = null; countLimit = false; layouts.clear(); record('session_start'); persist()
 }
 export function restore() {
   const raw = sessionStorage.getItem(STORAGE)
   if (!raw) return
-  session = validateSession(JSON.parse(raw)); countLimit=!!session.captureTruncated; active = false; paused = false; activeTask = null; changed()
+  const saved=JSON.parse(raw);
+  if(Array.isArray(saved.storageContexts)&&Array.isArray(saved.events))saved.events=saved.events.map((e:{context?:string|number})=>({...e,context:typeof e.context==='number'?saved.storageContexts[e.context]:e.context}));
+  delete saved.storageContexts;
+  session = validateSession(saved); countLimit=!!session.captureTruncated; active = false; paused = false; activeTask = null; changed()
 }
 export function resume() {
   if (!session || session.ended) return
